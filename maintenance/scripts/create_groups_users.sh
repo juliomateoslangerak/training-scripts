@@ -25,7 +25,7 @@
 
 echo Starting
 SUDOER=${SUDOER:-root}
-OMERODIR=${OMERODIR:-/opt/omero/server/OMERO.server}
+# OMERODIR=${OMERODIR:-/opt/omero/server/OMERO.server}
 VENV_SERVER=${VENV_SERVER:-/opt/omero/server/venv3}
 PASSWORD=${PASSWORD:-omero}
 HOST=${HOST:-workshop.openmicroscopy.org}

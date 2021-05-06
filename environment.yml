@@ -1,0 +1,13 @@
+channels:
+  - conda-forge
+  - ome
+dependencies:
+  - python=3.6
+  - pip
+  - omero-py
+  - zeroc-ice36-python
+  - pip:
+#    - ome-zarr
+#    - dask-image
+#    - stardist
+#    - tensorflow
