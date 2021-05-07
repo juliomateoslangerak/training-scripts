@@ -8,14 +8,7 @@ from itertools import product
 from json import dumps
 from random import choice
 from string import ascii_letters
-from skimage.filters import threshold_otsu, apply_hysteresis_threshold, gaussian
-from skimage.segmentation import clear_border
-from skimage.measure import label, regionprops
-from skimage.morphology import closing, cube
-from skimage.feature import peak_local_max
-from scipy.spatial.distance import cdist
 import numpy as np
-from itertools import permutations
 
 
 COLUMN_TYPES = {'string': grid.StringColumn,
@@ -35,7 +28,7 @@ COLUMN_TYPES = {'string': grid.StringColumn,
                 }
 
 
-def open_connection(username, password, group, port, host, secure=False):
+def open_connection(username, password, group, host, port=4064, secure=False):
     conn = gw.BlitzGateway(username=username,
                            passwd=password,
                            group=group,
@@ -171,10 +164,12 @@ def get_intensities(image, z_range=None, c_range=None, t_range=None, x_range=Non
 
 ############### Creating projects and datasets #####################
 
-def create_project(connection, project_name):
-    new_project = gw.ProjectWrapper(connection)
+def create_project(connection, project_name, project_description=None):
+    new_project = model.ProjectI()
     new_project.setName(rtypes.rstring(project_name))
-    new_project.save()
+    if project_description is not None:
+        new_project.setDescription(rtypes.rstring(project_description))
+    new_project = connection.getUpdateService().saveAndReturnObject(new_project)
 
     return new_project
 
@@ -187,7 +182,7 @@ def create_dataset(connection, dataset_name, dataset_description=None, parent_pr
     new_dataset = connection.getUpdateService().saveAndReturnObject(new_dataset)
     if parent_project:
         link = model.ProjectDatasetLinkI()
-        link.setParent(parent_project._obj)
+        link.setParent(parent_project)
         link.setChild(new_dataset)
         connection.getUpdateService().saveObject(link)
 
@@ -464,122 +459,3 @@ def create_shape_mask(mask_array, x_pos, y_pos, z_pos, t_pos,
 def link_annotation(object_wrapper, annotation_wrapper):
     object_wrapper.linkAnnotation(annotation_wrapper)
 
-
-###### Image analysis functions #######
-
-def segment_channel(channel, min_distance, sigma, method, hysteresis_levels):
-    """Segment a channel (3D numpy array)"""
-    threshold = threshold_otsu(channel)
-
-    # TODO: Threshold be a sigma passed here
-    if sigma:
-        gauss_filtered = gaussian(image=channel,
-                                  multichannel=False,
-                                  sigma=sigma,
-                                  preserve_range=True)
-    else:
-        gauss_filtered = channel
-
-    if method == 'hysteresis':  # We may try here hysteresis threshold
-        thresholded = apply_hysteresis_threshold(gauss_filtered,
-                                                 low=hysteresis_levels[0],
-                                                 high=hysteresis_levels[1]
-                                                 )
-
-    elif method == 'local_max':  # We are applying a local maxima algorithm
-        peaks = peak_local_max(gauss_filtered,
-                               min_distance=min_distance,
-                               threshold_abs=(threshold * .5),
-                               exclude_border=True,
-                               indices=False
-                               )
-        thresholded = np.copy(gauss_filtered)
-        thresholded[peaks] = thresholded.max()
-        thresholded = apply_hysteresis_threshold(thresholded,
-                                                 low=threshold * hysteresis_levels[0],
-                                                 high=threshold * hysteresis_levels[1]
-                                                 )
-    else:
-        raise Exception('A valid segmentation method was not provided')
-
-    closed = closing(thresholded, cube(min_distance))
-    cleared = clear_border(closed)
-    return label(cleared)
-
-
-def compute_channel_spots_properties(channel, label_channel, pixel_size=None):
-    """Analyzes and extracts the properties of a single channel"""
-
-    ch_properties = list()
-
-    regions = regionprops(label_channel, channel)
-
-    for region in regions:
-        ch_properties.append({'label': region.label,
-                              'area': region.area,
-                              # XY coordinates are swapped in a numpy array compared to an image
-                              'centroid': (region.centroid[0], region.centroid[1], region.centroid[1]),
-                              'weighted_centroid': (region.weighted_centroid[0], region.weighted_centroid[2], region.weighted_centroid[1]),
-                              'max_intensity': region.max_intensity,
-                              'mean_intensity': region.mean_intensity,
-                              'min_intensity': region.min_intensity
-                              })
-
-    return ch_properties
-
-
-def compute_distances_matrix(positions, sigma, pixel_size=None, remove_mcn=False):
-    """Calculates Mutual Closest Neighbour distances between all channels and returns the values as
-    a list of tuples where the first element is a tuple with the channel combination (ch_A, ch_B) and the second is
-    a list of pairwise measurements where, for every spot s in ch_A:
-    - Positions of s (s_x, s_y, s_z)
-    - Weighted euclidean distance dst to the nearest spot in ch_B, t
-    - Index t_index of the nearest spot in ch_B
-    Like so:
-    [((ch_A, ch_B), [[(s_x, s_y, s_z), dst, t_index],...]),...]
-    """
-    # TODO: Correct documentation
-    # Container for results
-    distances = list()
-
-    if len(positions) < 2:
-        raise Exception('Not enough dimensions to do a distance measurement')
-
-    channel_permutations = list(permutations(range(len(positions)), 2))
-
-    # Create a space to hold the distances. For every channel permutation (a, b) we want to store:
-    # Coordinates of a
-    # Distance to the closest spot in b
-    # Index of the nearest spot in b
-
-    if not pixel_size:
-        pixel_size = np.array((1, 1, 1))
-        # TODO: log warning
-    else:
-        pixel_size = np.array(pixel_size)
-
-    for a, b in channel_permutations:
-        # TODO: Try this
-        # TODO: Make explicit arguments of cdist
-        distances_matrix = cdist(positions[a], positions[b], w=pixel_size)
-
-        pairwise_distances = {'channels': (a, b),
-                              'coord_A': list(),
-                              'dist_3d': list(),
-                              'index_A': list(),
-                              'index_B': list()
-                              }
-        for index_a, (p, d) in enumerate(zip(positions[a], distances_matrix)):
-            if d.min() < sigma:
-                # We remove the mutual closest neighbours
-                if remove_mcn and distances_matrix[:, d.argmin()].argmin() != index_a:
-                    continue
-                else:
-                    pairwise_distances['coord_A'].append(tuple(p))
-                    pairwise_distances['dist_3d'].append(d.min())
-                    pairwise_distances['index_A'].append(index_a)
-                    pairwise_distances['index_B'].append(d.argmin())
-
-        distances.append(pairwise_distances)
-
-    return distances

@@ -7,6 +7,7 @@ dependencies:
   - omero-py
   - zeroc-ice36-python
   - pip:
+    - numpy
 #    - ome-zarr
 #    - dask-image
 #    - stardist
