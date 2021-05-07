@@ -1,25 +1,24 @@
-import subprocess, os
-
-# my_env = os.environ.copy()
-# my_env["OMERODIR"] = "/opt/OMERO.server-5.6.3-ice36-b228"
-
-my_env = {"OMERODIR": "/opt/OMERO.server-5.6.3-ice36-b228"}
+import subprocess
 
 
-# def subprocess_cmd(command):
-#     process = subprocess.run(command, stdout=subprocess.PIPE, shell=True, env=my_env)
-#     proc_stdout = process.communicate()[0].strip()
-#     print(proc_stdout)
-
-
-cmd = ['echo', '$OMERODIR']
-    #; omero login -u root -w ChangeMe -s 192.168.56.107 ; omero download Image:51 test1"
+cmd = 'omero download -k 74055b41-16bb-4f2e-aa0f-f19cd8d28f3f -s 192.168.56.107 Image:51 test1'
 
 try:
-    process = subprocess.run(cmd, stdout=subprocess.PIPE, env=my_env)
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
 except subprocess.CalledProcessError as e:
     print(f'Error: {e.output}')
     print(f'Command: {e.cmd}')
+
+print('done')
+
+cmd = 'omero download -k 74055b41-16bb-4f2e-aa0f-f19cd8d28f3f -s 192.168.56.107 Image:51 test2'
+
+try:
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+except subprocess.CalledProcessError as e:
+    print(f'Error: {e.output}')
+    print(f'Command: {e.cmd}')
+
 
 print(process.stdout)
 

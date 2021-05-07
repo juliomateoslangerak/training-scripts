@@ -9,6 +9,7 @@ dependencies:
   - zeroc-ice36-python
   - pip:
     - numpy
+    - argh
 #    - ome-zarr
 #    - dask-image
 #    - stardist
