@@ -1,3 +1,4 @@
+name: 'omero-basic'
 channels:
   - conda-forge
   - ome
