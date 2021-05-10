@@ -1,9 +1,9 @@
 import omero
 import subprocess
-import toolbox
+from . import toolbox
 from os import path
 import argh
-from config import *
+from . config import *
 
 import logging
 

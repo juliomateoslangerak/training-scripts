@@ -182,8 +182,8 @@ def create_dataset(connection, dataset_name, dataset_description=None, parent_pr
     new_dataset = connection.getUpdateService().saveAndReturnObject(new_dataset)
     if parent_project:
         link = model.ProjectDatasetLinkI()
-        link.setParent(parent_project)
-        link.setChild(new_dataset)
+        link.setChild(model.DatasetI(new_dataset.getId(), False))
+        link.setParent(model.ProjectI(parent_project.getId(), False))
         connection.getUpdateService().saveObject(link)
 
     return new_dataset
