@@ -1,3 +1,7 @@
+## known limitations
+# Does not take into account images in multiple datasets
+
+
 import omero
 import subprocess
 from . import toolbox
@@ -12,10 +16,12 @@ logger = logging.Logger(name=__name__, level=logging.INFO)
 
 def run_command(command):
     try:
-        subprocess.run(command, stdout=subprocess.PIPE, shell=True)
+        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     except subprocess.CalledProcessError as e:
         logger.error(f'Error: {e.output}')
         logger.error(f'Command: {e.cmd}')
+
+    return output.stdout.decode('utf-8')
 
 
 def copy_annotations(source_object, dest_object):
@@ -28,8 +34,11 @@ def copy_tags(source_object, dest_object):
     pass
 
 
-def copy_kvps(source_object, dest_object):
-    pass
+def copy_kvps(dest_conn, source_object, dest_object):
+    for ann in source_object.listAnnotations:
+        if type(ann).__name__ == 'MapAnnotationI':
+            new_ann = toolbox.create_annotation_map(dest_conn, ann.getValue())
+            toolbox.link_annotation(dest_object, new_ann)
 
 
 def copy_attachments(source_object, dest_object):
@@ -59,7 +68,14 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     if not path.exists(f'{image_path}'):
         run_command(f"omero download -k {source_uuid} -s {source_host} Image:{source_image.getId()} {image_path}")
     print(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} {image_path}")
-    run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} {image_path}")
+    output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} {image_path}")
+    try:
+        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output[6:])]
+    except TypeError:
+        dest_images = [toolbox.get_image(dest_conn, eval(output[6:]))]
+
+    if len(dest_images) == 1:
+        copy_kvps(dest_conn, source_image, dest_images[0])
 
 
 def copy_dataset(source_conn, dest_conn, source_dataset, dest_project):
