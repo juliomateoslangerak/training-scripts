@@ -49,8 +49,23 @@ def copy_rois(source_image, dest_image):
     pass
 
 
-def copy_description():
+def copy_description(source_obj, dest_object):
     pass
+
+
+def copy_object_annotations(source_conn, dest_conn, source_obj_id, dest_obj_id, obj_type):
+    source_obj = source_conn.getObject(obj_type, source_obj_id)
+    dest_obj = dest_conn.getObject(obj_type, dest_obj_id)
+
+    # Copy description
+    dest_obj.setDescription(source_obj.getDescription())
+    dest_obj = dest_conn.getUpdateService().saveAndReturnObject(dest_obj)
+
+    # Copy kvp
+    for ann in source_obj.listAnnotations():
+        if type(ann).__name__ == 'TagAnnotationWrapper':
+
+
 
 
 def get_original_file_names(image):
@@ -78,11 +93,20 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
         copy_kvps(dest_conn, source_image, dest_images[0])
 
 
+def copy_image_annotations(source_conn, dest_conn, source_image_id, dest_image_id):
+    pass
+
+
+def match_images(source_conn, dest_conn, source_dataset_id, dest_dataset_id):
+    return [0], [0]
+
+
 def copy_dataset(source_conn, dest_conn, source_dataset, dest_project):
     dest_dataset = toolbox.create_dataset(connection=dest_conn,
                                           dataset_name=source_dataset.getName(),
                                           dataset_description=source_dataset.getDescription(),
                                           parent_project=dest_project)
+    copy_dataset_annotations(source_conn, dest_conn, source_dataset.getId(), dest_dataset.getId())
 
     images = source_dataset.listChildren()
     orig_file_names = []
@@ -91,16 +115,30 @@ def copy_dataset(source_conn, dest_conn, source_dataset, dest_project):
             orig_file_names.append(get_original_file_names(image)[0])
             copy_image(source_conn, dest_conn, image, dest_dataset)
 
+    source_images, dest_images = match_images(source_conn, dest_conn, source_dataset.getId(), dest_dataset.getId())
+
+    for source_image, dest_image in zip(source_images, dest_images):
+        copy_image_annotations(source_conn, dest_conn, source_image, dest_image)
+
+
+def copy_dataset_annotations(source_conn, dest_conn, source_dataset_id, dest_dataset_id):
+    pass
+
 
 def copy_project(source_conn, dest_conn, source_project):
     dest_project = toolbox.create_project(dest_conn, source_project.getName())
+    copy_project_annotations(source_conn, dest_conn, source_project.getId(), dest_project.getId())
 
     datasets = source_project.listChildren()
     for dataset in datasets:
         copy_dataset(source_conn, dest_conn, dataset, dest_project)
 
 
-def run(source_conf, dest_conf, project_ids, nb_users):
+def copy_project_annotations(source_conn, dest_conn, source_project_id, dest_project_id):
+    pass
+
+
+def run(source_conf, dest_conf, source_project_ids, nb_users):
     try:
         source_conn = toolbox.open_connection(**source_conf)
 
@@ -110,7 +148,7 @@ def run(source_conf, dest_conf, project_ids, nb_users):
 
             dest_conn = toolbox.open_connection(**dest_conf)
 
-            for project_id in project_ids:
+            for project_id in source_project_ids:
                 project = toolbox.get_project(source_conn, project_id)
                 copy_project(source_conn, dest_conn, project)
 
