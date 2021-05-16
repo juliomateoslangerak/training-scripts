@@ -4,14 +4,105 @@
 
 import omero
 import subprocess
-from . import toolbox
+from random import choice
+from string import ascii_letters
+import csv
+import toolbox
 from os import path
 import argh
-from . config import *
+# from . config import *
 
 import logging
 
 logger = logging.Logger(name=__name__, level=logging.INFO)
+
+FULL_NAMES = ["Francis Crick",
+                  "Linda Buck",
+                  "Charles Darwin",
+                  "Marie Curie",
+                  "Alexander Fleming",
+                  "Rosalind Franklin",
+                  "Robert Hooke",
+                  "Jane Goodall",
+                  "Gregor Mendel",
+                  "Barbara McClintock",
+                  "Louis Pasteur",
+                  "Ada Lovelace",
+                  "Linus Pauling",
+                  "Frances Kelsey",
+                  "Maurice Wilkins",
+                  "Florence Nightingale",
+                  "John Sulston",
+                  "Elizabeth Blackwell",
+                  "Richard Dawkins",
+                  "Caroline Dean",
+                  "Stephen Reicher",
+                  "Wendy Barclay",
+                  "Paul Nurse",
+                  "Jennifer Doudna",
+                  "Adrian Thomas",
+                  "Ann Clarke",
+                  "Oswald Avery",
+                  "Liz Sockett",
+                  "Erwin Chargaff",
+                  "Tracey Rogers",
+                  "Ronald Fisher",
+                  "Rachel Carson",
+                  "William Harvey",
+                  "Nettie Stevens",
+                  "Jeffrey Hall",
+                  "Youyou Tu",
+                  "Michael Rosbash",
+                  "Carol Greider",
+                  "Yoshinori Ohsumi",
+                  "Rosalyn Yalow",
+                  "Amedeo Avogadro",
+                  "Virginia Apgar",
+                  "Kristian Birkeland",
+                  "Mary Anning",
+                  "Chen-Ning Yang",
+                  "Stephanie Kwolek",
+                  "Jagadish Bose",
+                  "Rita Levi-Montalcini",
+                  "Susumu Tonegawa",
+                  "Irene Joliot-Curie",
+                  ]
+
+
+def create_users(admin_conn, save_dir: str, nb_users: int, nb_trainers: int):
+    users = {}
+
+    # creating trainer names and passwords
+    for trainer_nb in range(nb_trainers):
+        users[f'trainer-{trainer_nb}'] = "".join([choice(ascii_letters) for _ in range(8)])
+
+    # creating user names and paswords
+    for user_nb in range(nb_users):
+        users[f'user-{user_nb}'] = "".join([choice(ascii_letters) for _ in range(8)])
+
+    # save file with user names and passwords
+    save_path = path.join(save_dir, 'user_passwords.csv')
+    with open(save_path, 'w') as f:
+        writer = csv.writer(f)
+        for user_name, password in users.items():
+            writer.writerow([user_name, password])
+
+    admin_uuid = admin_conn.getSession().getUuid().getValue()
+    host = admin_conn.host
+
+    # creating groups
+    run_command(f"omero group -k {admin_uuid} -s {host} add Lab1 --perms 'rwra--' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} add Lab2 --perms 'rwr---' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} add Lab3 --perms 'rwrw--' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} add Lab4 --perms 'rw----' --ignore-existing")
+    logger.info('Groups created')
+
+    # creating users
+    for n, (u, w) in enumerate(users.items()):
+        run_command(f"omero user -k {admin_uuid} -s {host} add {u} {FULL_NAMES[n]} Lab1 Lab2 Lab3 Lab4 -P {w} --ignore-existing")
+        logger.info(f'User {u} created')
+
+    return users
 
 
 def run_command(command):
@@ -20,6 +111,7 @@ def run_command(command):
     except subprocess.CalledProcessError as e:
         logger.error(f'Error: {e.output}')
         logger.error(f'Command: {e.cmd}')
+        raise RuntimeError(f'Command could not be run: {command}')
 
     return output.stdout.decode('utf-8')
 
@@ -82,7 +174,6 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
 
     if not path.exists(f'{image_path}'):
         run_command(f"omero download -k {source_uuid} -s {source_host} Image:{source_image.getId()} {image_path}")
-    print(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} {image_path}")
     output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} {image_path}")
     try:
         dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output[6:])]
@@ -138,25 +229,37 @@ def copy_project_annotations(source_conn, dest_conn, source_project_id, dest_pro
     pass
 
 
-def run(source_conf, dest_conf, source_project_ids, nb_users):
+def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: int, nb_trainers: int):
     try:
-        source_conn = toolbox.open_connection(**source_conf)
+        admin_conn = toolbox.open_connection(**admin_conf)
 
-        for user_nb in range(1, nb_users + 1):
-            dest_conf['username'] = f'user-{user_nb}'
-            dest_conf['group'] = f'Lab{user_nb//(nb_users//2) + 1}'
+        users = create_users(admin_conn, nb_users=nb_users, nb_trainers=nb_trainers)
 
-            dest_conn = toolbox.open_connection(**dest_conf)
+        admin_conn.close()
 
-            for project_id in source_project_ids:
-                project = toolbox.get_project(source_conn, project_id)
-                copy_project(source_conn, dest_conn, project)
+        try:
+            source_conn = toolbox.open_connection(**source_conf)
 
+            for user_nb, (user_name, user_pw) in enumerate(users.items()):
+                dest_conf['username'] = user_name
+                dest_conf['password'] = user_pw
+                dest_conf['group'] = f'Lab{user_nb + 1//(nb_users//2) + 1}'
+
+                dest_conn = toolbox.open_connection(**dest_conf)
+
+                for project_id in source_project_ids:
+                    project = toolbox.get_project(source_conn, project_id)
+                    copy_project(source_conn, dest_conn, project)
+
+                dest_conn.close()
+
+        finally:
+            source_conn.close()
             dest_conn.close()
 
     finally:
-        source_conn.close()
-        dest_conn.close()
+        if admin_conn.isConnected():
+            admin_conn.close()
 
 
 if __name__ == '__main__':
