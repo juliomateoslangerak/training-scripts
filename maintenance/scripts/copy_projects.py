@@ -127,8 +127,8 @@ def copy_tags(source_object, dest_object):
 
 
 def copy_kvps(dest_conn, source_object, dest_object):
-    for ann in source_object.listAnnotations:
-        if type(ann).__name__ == 'MapAnnotationI':
+    for ann in source_object.listAnnotations():
+        if type(ann).__name__ == 'MapAnnotationWrapper':
             new_ann = toolbox.create_annotation_map(dest_conn, ann.getValue())
             toolbox.link_annotation(dest_object, new_ann)
 
@@ -141,23 +141,17 @@ def copy_rois(source_image, dest_image):
     pass
 
 
-def copy_description(source_obj, dest_object):
-    pass
+def copy_description(dest_conn, source_obj, dest_object):
+    dest_object.setDescription(source_obj.getDescription())
+    return dest_conn.getUpdateService().saveAndReturnObject(dest_object)
 
 
 def copy_object_annotations(source_conn, dest_conn, source_obj_id, dest_obj_id, obj_type):
     source_obj = source_conn.getObject(obj_type, source_obj_id)
     dest_obj = dest_conn.getObject(obj_type, dest_obj_id)
 
-    # Copy description
-    dest_obj.setDescription(source_obj.getDescription())
-    dest_obj = dest_conn.getUpdateService().saveAndReturnObject(dest_obj)
-
-    # Copy kvp
-    for ann in source_obj.listAnnotations():
-        if type(ann).__name__ == 'TagAnnotationWrapper':
-
-
+    dest_obj = copy_description(dest_conn, source_obj, dest_obj)
+    copy_kvps(dest_conn, source_obj, dest_obj)
 
 
 def get_original_file_names(image):
@@ -181,11 +175,11 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
         dest_images = [toolbox.get_image(dest_conn, eval(output[6:]))]
 
     if len(dest_images) == 1:
-        copy_kvps(dest_conn, source_image, dest_images[0])
+        copy_image_annotations(source_conn, dest_conn. source_image, dest_images[0])
 
 
-def copy_image_annotations(source_conn, dest_conn, source_image_id, dest_image_id):
-    pass
+def copy_image_annotations(source_conn, dest_conn, source_image, dest_image):
+    copy_kvps(dest_conn, source_image, dest_image)
 
 
 def match_images(source_conn, dest_conn, source_dataset_id, dest_dataset_id):
@@ -205,11 +199,6 @@ def copy_dataset(source_conn, dest_conn, source_dataset, dest_project):
         if get_original_file_names(image)[0] not in orig_file_names:
             orig_file_names.append(get_original_file_names(image)[0])
             copy_image(source_conn, dest_conn, image, dest_dataset)
-
-    source_images, dest_images = match_images(source_conn, dest_conn, source_dataset.getId(), dest_dataset.getId())
-
-    for source_image, dest_image in zip(source_images, dest_images):
-        copy_image_annotations(source_conn, dest_conn, source_image, dest_image)
 
 
 def copy_dataset_annotations(source_conn, dest_conn, source_dataset_id, dest_dataset_id):
