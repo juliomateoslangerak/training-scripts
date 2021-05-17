@@ -105,6 +105,7 @@ def create_users(admin_conn, save_dir: str, nb_users: int, nb_trainers: int):
 def run_command(command):
     try:
         output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        print(output)
     except subprocess.CalledProcessError as e:
         logger.error(f'Error: {e.output}')
         logger.error(f'Command: {e.cmd}')
