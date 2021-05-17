@@ -86,17 +86,18 @@ def create_users(admin_conn, save_dir: str, nb_users: int, nb_trainers: int):
 
     admin_uuid = admin_conn.getSession().getUuid().getValue()
     host = admin_conn.host
+    port = admin_conn.port
 
     # creating groups
-    run_command(f"omero group -k {admin_uuid} -s {host} add Lab1 --perms 'rwra--' --ignore-existing")
-    run_command(f"omero group -k {admin_uuid} -s {host} add Lab2 --perms 'rwr---' --ignore-existing")
-    run_command(f"omero group -k {admin_uuid} -s {host} add Lab3 --perms 'rwrw--' --ignore-existing")
-    run_command(f"omero group -k {admin_uuid} -s {host} add Lab4 --perms 'rw----' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab1 --perms 'rwra--' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab2 --perms 'rwr---' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab3 --perms 'rwrw--' --ignore-existing")
+    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab4 --perms 'rw----' --ignore-existing")
     logger.info('Groups created')
 
     # creating users
     for n, (u, w) in enumerate(users.items()):
-        run_command(f"omero user -k {admin_uuid} -s {host} add {u} {FULL_NAMES[n]} Lab1 Lab2 Lab3 Lab4 -P {w} --ignore-existing")
+        run_command(f"omero user -k {admin_uuid} -s {host} -p {port} add {u} {FULL_NAMES[n]} Lab1 Lab2 Lab3 Lab4 -P {w} --ignore-existing")
         logger.info(f'User {u} created')
 
     return users
@@ -160,12 +161,14 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     source_uuid = source_conn.getSession().getUuid().getValue()
     dest_uuid = dest_conn.getSession().getUuid().getValue()
     source_host = source_conn.host
+    source_port = source_conn.port
     dest_host = dest_conn.host
+    dest_port = dest_conn.port
     image_path = path.join(environ[' '], get_original_file_names(source_image)[0])
 
     if not path.exists(f'{image_path}'):
-        run_command(f"omero download -k {source_uuid} -s {source_host} Image:{source_image.getId()} '{image_path}'")
-    output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} '{image_path}'")
+        run_command(f"omero download -k {source_uuid} -s {source_host} -p {source_port} Image:{source_image.getId()} '{image_path}'")
+    output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -p {dest_port} -d {dest_dataset.getId().getValue()} '{image_path}'")
     try:
         dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output.replace('Image:', ''))]
     except TypeError:
@@ -221,7 +224,7 @@ def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: 
     try:
         admin_conn = toolbox.open_connection(**admin_conf)
 
-        users = create_users(admin_conn, os.environ['OMERO_DATA_DIR'], nb_users=nb_users, nb_trainers=nb_trainers, )
+        users = create_users(admin_conn, os.environ['OMERO_DATA_DIR'], nb_users=nb_users, nb_trainers=nb_trainers)
 
         admin_conn.close()
 
