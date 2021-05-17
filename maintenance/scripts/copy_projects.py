@@ -70,7 +70,7 @@ def create_users(admin_conn, save_dir: str, nb_users: int, nb_trainers: int):
 
     # creating trainer names and passwords
     for trainer_nb in range(nb_trainers):
-        users[f'trainer-{trainer_nb}'] = "".join([choice(ascii_letters) for _ in range(8)])
+        users[f'trainer-{trainer_nb + 1}'] = "".join([choice(ascii_letters) for _ in range(8)])
 
     # creating user names and paswords
     for user_nb in range(nb_users):
@@ -164,14 +164,16 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     dest_host = dest_conn.host
     dest_port = dest_conn.port
     image_path = os.path.join(os.environ['OMERO_DATA_DIR'], get_original_file_names(source_image)[0])
+    print(image_path)
 
     if not os.path.exists(f'{image_path}'):
         run_command(f"omero download -k {source_uuid} -s {source_host} -p {source_port} Image:{source_image.getId()} '{image_path}'")
     output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -p {dest_port} -d {dest_dataset.getId().getValue()} '{image_path}'")
+    print(output)
     try:
-        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output.replace('Image:', ''))]
+        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output[6:])]
     except TypeError:
-        dest_images = [toolbox.get_image(dest_conn, eval(output.replace('Image:', '')))]
+        dest_images = [toolbox.get_image(dest_conn, eval(output[6:]))]
 
     if len(dest_images) == 1:
         copy_image_annotations(source_conn, dest_conn. source_image, dest_images[0])
