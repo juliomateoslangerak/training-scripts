@@ -1,7 +1,6 @@
 ## known limitations
 # Does not take into account images in multiple datasets
-
-
+import os
 import subprocess
 from random import choice
 from string import ascii_letters
@@ -222,7 +221,7 @@ def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: 
     try:
         admin_conn = toolbox.open_connection(**admin_conf)
 
-        users = create_users(admin_conn, nb_users=nb_users, nb_trainers=nb_trainers)
+        users = create_users(admin_conn, os.environ['OMERO_DATA_DIR'], nb_users=nb_users, nb_trainers=nb_trainers, )
 
         admin_conn.close()
 
