@@ -167,8 +167,8 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     print(image_path)
 
     if not os.path.exists(f'{image_path}'):
-        run_command(f"omero download -k {source_uuid} -s {source_host} -p {source_port} Image:{source_image.getId()} '{image_path}'")
-    output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -p {dest_port} -d {dest_dataset.getId().getValue()} '{image_path}'")
+        run_command(f'omero download -k {source_uuid} -s {source_host} -p {source_port} Image:{source_image.getId()} "{image_path}"')
+    output = run_command(f'omero import -k {dest_uuid} -s {dest_host} -p {dest_port} -d {dest_dataset.getId().getValue()} "{image_path}"')
     print(output)
     try:
         dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output[6:])]
