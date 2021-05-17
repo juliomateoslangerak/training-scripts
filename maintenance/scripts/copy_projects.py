@@ -5,7 +5,7 @@ import subprocess
 from random import choice
 from string import ascii_letters
 import csv
-from . import toolbox
+import toolbox
 from os import path, environ
 import argh
 
