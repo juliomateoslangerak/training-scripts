@@ -2,71 +2,69 @@
 # Does not take into account images in multiple datasets
 
 
-import omero
 import subprocess
 from random import choice
 from string import ascii_letters
 import csv
-import toolbox
+from . import toolbox
 from os import path, environ
 import argh
-# from . config import *
 
 import logging
 
 logger = logging.Logger(name=__name__, level=logging.INFO)
 
 FULL_NAMES = ["Francis Crick",
-                  "Linda Buck",
-                  "Charles Darwin",
-                  "Marie Curie",
-                  "Alexander Fleming",
-                  "Rosalind Franklin",
-                  "Robert Hooke",
-                  "Jane Goodall",
-                  "Gregor Mendel",
-                  "Barbara McClintock",
-                  "Louis Pasteur",
-                  "Ada Lovelace",
-                  "Linus Pauling",
-                  "Frances Kelsey",
-                  "Maurice Wilkins",
-                  "Florence Nightingale",
-                  "John Sulston",
-                  "Elizabeth Blackwell",
-                  "Richard Dawkins",
-                  "Caroline Dean",
-                  "Stephen Reicher",
-                  "Wendy Barclay",
-                  "Paul Nurse",
-                  "Jennifer Doudna",
-                  "Adrian Thomas",
-                  "Ann Clarke",
-                  "Oswald Avery",
-                  "Liz Sockett",
-                  "Erwin Chargaff",
-                  "Tracey Rogers",
-                  "Ronald Fisher",
-                  "Rachel Carson",
-                  "William Harvey",
-                  "Nettie Stevens",
-                  "Jeffrey Hall",
-                  "Youyou Tu",
-                  "Michael Rosbash",
-                  "Carol Greider",
-                  "Yoshinori Ohsumi",
-                  "Rosalyn Yalow",
-                  "Amedeo Avogadro",
-                  "Virginia Apgar",
-                  "Kristian Birkeland",
-                  "Mary Anning",
-                  "Chen-Ning Yang",
-                  "Stephanie Kwolek",
-                  "Jagadish Bose",
-                  "Rita Levi-Montalcini",
-                  "Susumu Tonegawa",
-                  "Irene Joliot-Curie",
-                  ]
+              "Linda Buck",
+              "Charles Darwin",
+              "Marie Curie",
+              "Alexander Fleming",
+              "Rosalind Franklin",
+              "Robert Hooke",
+              "Jane Goodall",
+              "Gregor Mendel",
+              "Barbara McClintock",
+              "Louis Pasteur",
+              "Ada Lovelace",
+              "Linus Pauling",
+              "Frances Kelsey",
+              "Maurice Wilkins",
+              "Florence Nightingale",
+              "John Sulston",
+              "Elizabeth Blackwell",
+              "Richard Dawkins",
+              "Caroline Dean",
+              "Stephen Reicher",
+              "Wendy Barclay",
+              "Paul Nurse",
+              "Jennifer Doudna",
+              "Adrian Thomas",
+              "Ann Clarke",
+              "Oswald Avery",
+              "Liz Sockett",
+              "Erwin Chargaff",
+              "Tracey Rogers",
+              "Ronald Fisher",
+              "Rachel Carson",
+              "William Harvey",
+              "Nettie Stevens",
+              "Jeffrey Hall",
+              "Youyou Tu",
+              "Michael Rosbash",
+              "Carol Greider",
+              "Yoshinori Ohsumi",
+              "Rosalyn Yalow",
+              "Amedeo Avogadro",
+              "Virginia Apgar",
+              "Kristian Birkeland",
+              "Mary Anning",
+              "Chen-Ning Yang",
+              "Stephanie Kwolek",
+              "Jagadish Bose",
+              "Rita Levi-Montalcini",
+              "Susumu Tonegawa",
+              "Irene Joliot-Curie",
+              ]
 
 
 def create_users(admin_conn, save_dir: str, nb_users: int, nb_trainers: int):
@@ -164,13 +162,13 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     dest_uuid = dest_conn.getSession().getUuid().getValue()
     source_host = source_conn.host
     dest_host = dest_conn.host
-    image_path = path.join(environ['OMERO_DATA_DIR'], get_original_file_names(source_image)[0])
+    image_path = path.join(environ[' '], get_original_file_names(source_image)[0])
 
     if not path.exists(f'{image_path}'):
         run_command(f"omero download -k {source_uuid} -s {source_host} Image:{source_image.getId()} '{image_path}'")
     output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} '{image_path}'")
     try:
-        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output.replace('Image:', '')]
+        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output.replace('Image:', ''))]
     except TypeError:
         dest_images = [toolbox.get_image(dest_conn, eval(output.replace('Image:', '')))]
 
@@ -219,6 +217,8 @@ def copy_project_annotations(source_conn, dest_conn, source_project_id, dest_pro
 
 
 def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: int, nb_trainers: int):
+    if nb_users > len(FULL_NAMES):
+        raise ValueError(f'The number of users may not be larger than {len(FULL_NAMES)}')
     try:
         admin_conn = toolbox.open_connection(**admin_conf)
 
