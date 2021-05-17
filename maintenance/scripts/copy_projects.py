@@ -163,7 +163,7 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     source_port = source_conn.port
     dest_host = dest_conn.host
     dest_port = dest_conn.port
-    image_path = os.path.join(os.environ['OMERO_DATA_DIR'], get_original_file_names(source_image)[0].replace(' ', '\ '))
+    image_path = os.path.join(os.environ['OMERO_DATA_DIR'], get_original_file_names(source_image)[0].replace(' ', ''))
     print(image_path)
 
     if not os.path.exists(f'{image_path}'):
