@@ -225,10 +225,9 @@ def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: 
         raise ValueError(f'The number of users may not be larger than {len(FULL_NAMES)}')
     try:
         admin_conn = toolbox.open_connection(**admin_conf)
-
-        users = create_users(admin_conn, os.environ['OMERO_DATA_DIR'], nb_users=nb_users, nb_trainers=nb_trainers)
-
-        if passwords is not None:
+        if passwords is None:
+            users = create_users(admin_conn, os.environ['OMERO_DATA_DIR'], nb_users=nb_users, nb_trainers=nb_trainers)
+        else:
             users = passwords
 
         admin_conn.close()
