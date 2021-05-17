@@ -8,7 +8,7 @@ from random import choice
 from string import ascii_letters
 import csv
 import toolbox
-from os import path
+from os import path, environ
 import argh
 # from . config import *
 
@@ -164,15 +164,15 @@ def copy_image(source_conn, dest_conn, source_image, dest_dataset):
     dest_uuid = dest_conn.getSession().getUuid().getValue()
     source_host = source_conn.host
     dest_host = dest_conn.host
-    image_path = f'{TEMP_DIR}{get_original_file_names(source_image)[0].replace(" ", "")}'
+    image_path = path.join(environ['OMERO_DATA_DIR'], get_original_file_names(source_image)[0])
 
     if not path.exists(f'{image_path}'):
-        run_command(f"omero download -k {source_uuid} -s {source_host} Image:{source_image.getId()} {image_path}")
-    output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} {image_path}")
+        run_command(f"omero download -k {source_uuid} -s {source_host} Image:{source_image.getId()} '{image_path}'")
+    output = run_command(f"omero import -k {dest_uuid} -s {dest_host} -d {dest_dataset.getId().getValue()} '{image_path}'")
     try:
-        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output[6:])]
+        dest_images = [toolbox.get_image(dest_conn, i) for i in eval(output.replace('Image:', '')]
     except TypeError:
-        dest_images = [toolbox.get_image(dest_conn, eval(output[6:]))]
+        dest_images = [toolbox.get_image(dest_conn, eval(output.replace('Image:', '')))]
 
     if len(dest_images) == 1:
         copy_image_annotations(source_conn, dest_conn. source_image, dest_images[0])
