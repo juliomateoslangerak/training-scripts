@@ -217,13 +217,16 @@ def copy_project_annotations(source_conn, dest_conn, source_project_id, dest_pro
     pass
 
 
-def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: int, nb_trainers: int):
+def run(source_conf, dest_conf, admin_conf, source_project_ids: list, nb_users: int, nb_trainers: int, passwords=None):
     if nb_users > len(FULL_NAMES):
         raise ValueError(f'The number of users may not be larger than {len(FULL_NAMES)}')
     try:
         admin_conn = toolbox.open_connection(**admin_conf)
 
         users = create_users(admin_conn, os.environ['OMERO_DATA_DIR'], nb_users=nb_users, nb_trainers=nb_trainers)
+
+        if passwords is not None:
+            users = passwords
 
         admin_conn.close()
 
