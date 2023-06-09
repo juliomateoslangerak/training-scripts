@@ -5,7 +5,7 @@ import subprocess
 from random import choice
 from string import ascii_letters
 import csv
-import toolbox
+#import toolbox
 import argh
 
 import logging
@@ -88,15 +88,15 @@ def create_users(admin_conn, save_dir: str, nb_users: int, nb_trainers: int):
     port = admin_conn.port
 
     # creating groups
-    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab1 --perms 'rwra--' --ignore-existing")
-    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab2 --perms 'rwr---' --ignore-existing")
-    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab3 --perms 'rwrw--' --ignore-existing")
-    run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab4 --perms 'rw----' --ignore-existing")
+    #run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Group1 --perms 'rw----' --ignore-existing")
+    #run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Group2 --perms 'rw----' --ignore-existing")
+    # run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab3 --perms 'rwrw--' --ignore-existing")
+    # run_command(f"omero group -k {admin_uuid} -s {host} -p {port} add Lab4 --perms 'rw----' --ignore-existing")
     logger.info('Groups created')
 
     # creating users
     for n, (u, w) in enumerate(users.items()):
-        run_command(f"omero user -k {admin_uuid} -s {host} -p {port} add {u} {FULL_NAMES[n]} Lab1 Lab2 Lab3 Lab4 -P {w} --ignore-existing")
+        run_command(f"omero user -k {admin_uuid} -s {host} -p {port} add {u} {FULL_NAMES[n]} Group1 Group2 -P {w} --ignore-existing")
         logger.info(f'User {u} created')
 
     return users

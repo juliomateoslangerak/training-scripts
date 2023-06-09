@@ -1,4 +1,4 @@
-name: 'omero-basic'
+name: 'omero-training'
 channels:
   - conda-forge
   - ome
