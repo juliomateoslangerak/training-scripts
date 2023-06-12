@@ -1,21 +1,21 @@
 
 # Create users
 # omero user add login user-1 user-1 Lab1 Lab2 Lab3 Lab4 -P ome --ignore-existing
-user add -P IgP4LSZw -e elsa.castellani@univ-amu.fr ecastellani Elsa Castellani 4 5 6 7
-user add -P WGTVarHD -e anne.cantereau@univ-poitiers.fr acantereau Anne Cantereau 4 5 6 7
-user add -P Rb5Qsh4a -e magda.rodrigues@inserm.fr mrodrigues Magda Rodrigues 4 5 6 7
-user add -P PqLNwFUt -e sophie.desset@uca.fr sdesset Sophie Desset 4 5 6 7
-user add -P 4OpmPUUE -e mouad.essani@lisa.ipsl.fr messani Mouad Essani 4 5 6 7
-user add -P HpAZ3jh2 -e kaori.sakai@inrae.fr ksakai Kaori Sakai 4 5 6 7
-user add -P M3K97Joq -e fanny.decoeur@u-bordeaux.fr fdecoeur Fanny Decoeur 4 5 6 7
-user add -P mka6YrgU -e guiote@igbmc.fr eguiot Elvire Guiot 4 5 6 7
-user add -P 5kZKsjjf -e grandgie@igbmc.fr egrandgirard Erwan Grandgirard 4 5 6 7
-user add -P WvdZFhAE -e mylene.pezet@inserm.fr Pezet Myléne Pezet 4 5 6 7
-user add -P OQFv6n3o -e guillaume.maucort@u-bordeaux.fr gmaucort Guillaume Maucort 4 5 6 7
-user add -P 0n31rqjB -e kevin.fournier@inria.fr kfournier Kévin Fournier 4 5 6 7
-user add -P 8BCwxms0 -e gerard.henry@fresnel.fr ghenry Gérard Henry 4 5 6 7
-user add -P 7AZMlJ6s -e stephane.bansard@inrae.fr sbansard Stéphane Bansard 4 5 6 7
-user add -P NZ7br5V9 -e raphael.braud-mussi@ijm.fr Rbraud-mussi Raphael Braud-Mussi 4 5 6 7
+user add -P ome -e elsa.castellani@univ-amu.fr ecastellani Elsa Castellani 4 5 6 7
+user add -P ome -e anne.cantereau@univ-poitiers.fr acantereau Anne Cantereau 4 5 6 7
+user add -P ome -e magda.rodrigues@inserm.fr mrodrigues Magda Rodrigues 4 5 6 7
+user add -P ome -e sophie.desset@uca.fr sdesset Sophie Desset 4 5 6 7
+user add -P ome -e mouad.essani@lisa.ipsl.fr messani Mouad Essani 4 5 6 7
+user add -P ome -e kaori.sakai@inrae.fr ksakai Kaori Sakai 4 5 6 7
+user add -P ome -e fanny.decoeur@u-bordeaux.fr fdecoeur Fanny Decoeur 4 5 6 7
+user add -P ome -e guiote@igbmc.fr eguiot Elvire Guiot 4 5 6 7
+user add -P ome -e grandgie@igbmc.fr egrandgirard Erwan Grandgirard 4 5 6 7
+user add -P ome -e mylene.pezet@inserm.fr Pezet Myléne Pezet 4 5 6 7
+user add -P ome -e guillaume.maucort@u-bordeaux.fr gmaucort Guillaume Maucort 4 5 6 7
+user add -P ome -e kevin.fournier@inria.fr kfournier Kévin Fournier 4 5 6 7
+user add -P ome -e gerard.henry@fresnel.fr ghenry Gérard Henry 4 5 6 7
+user add -P ome -e stephane.bansard@inrae.fr sbansard Stéphane Bansard 4 5 6 7
+user add -P ome -e raphael.braud-mussi@ijm.fr Rbraud-mussi Raphael Braud-Mussi 4 5 6 7
 
 
 # move data
